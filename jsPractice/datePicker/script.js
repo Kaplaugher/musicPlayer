@@ -1,16 +1,24 @@
 import {
   addMonths,
+  eachDayOfInterval,
+  endOfMonth,
   format,
   fromUnixTime,
   getUnixTime,
+  isSameDay,
+  isSameMonth,
+  startOfMonth,
+  startOfWeek,
   subMonths,
 } from 'date-fns';
+import { endOfWeek } from 'date-fns/esm';
 
 const datePickerButton = document.querySelector('.date-picker-button');
 const datePicker = document.querySelector('.date-picker');
 const datePickerHeaderText = document.querySelector('.current-month');
 const prevMonthButton = document.querySelector('.prev-month-button');
 const nextMonthButton = document.querySelector('.next-month-button');
+const dateGrid = document.querySelector('.date-picker-grid-dates');
 
 let currentDate = new Date();
 
@@ -26,20 +34,48 @@ function setDate(date) {
   datePickerButton.dataset.selectedDate = getUnixTime(date);
 }
 
-function setupDatePicker() {
+function setupDatePicker(selectedDate) {
   datePickerHeaderText.innerText = format(currentDate, 'MMMM - yyyy');
+  setupDates(selectedDate);
+}
+
+function setupDates(selectedDate) {
+  const firstWeekStart = startOfWeek(startOfMonth(currentDate));
+  const lastWeek = endOfWeek(endOfMonth(currentDate));
+  const dates = eachDayOfInterval({ start: firstWeekStart, end: lastWeek });
+  dateGrid.innerHTML = '';
+  dates.forEach((date) => {
+    console.log(date);
+    const dateElement = document.createElement('button');
+    dateElement.classList.add('date');
+    dateElement.innerText = date.getDate();
+    if (!isSameMonth(date, currentDate)) {
+      dateElement.classList.add('date-picker-other-month-date');
+    }
+    if (isSameDay(date, selectedDate)) {
+      dateElement.classList.add('selected');
+    }
+
+    dateElement.addEventListener('click', () => {
+      setDate(date);
+      datePicker.classList.remove('show');
+    });
+    dateGrid.appendChild(dateElement);
+  });
 }
 
 nextMonthButton.addEventListener('click', () => {
+  const selectedDate = fromUnixTime(datePickerButton.dataset.selectedDate);
   console.log('clicked');
   currentDate = addMonths(currentDate, 1);
-  setupDatePicker();
+  setupDatePicker(selectedDate);
 });
 
 prevMonthButton.addEventListener('click', () => {
+  const selectedDate = fromUnixTime(datePickerButton.dataset.selectedDate);
   console.log('clicked');
   currentDate = subMonths(currentDate, 1);
-  setupDatePicker();
+  setupDatePicker(selectedDate);
 });
 
 setDate(new Date());
